@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>SelfBot Admin</title>
+  <style>
+    :root {
+      --bg: #0f1629;
+      --card: #16213a;
+      --accent: #4dd0e1;
+      --text: #eef2ff;
+      --muted: #94a3b8;
+    }
+    body {
+      font-family: "Fira Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(77,208,225,0.1), transparent 20%),
+                  radial-gradient(circle at 90% 10%, rgba(255,255,255,0.08), transparent 25%),
+                  linear-gradient(135deg, #0f1629 0%, #0b1020 100%);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    label { display: block; margin-bottom: 8px; color: var(--muted); }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    button {
+      background: var(--accent);
+      color: #0b1020;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(77,208,225,0.25); }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    pre { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; overflow: auto; }
+    .muted { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SelfBot 控制台</h1>
+    <div class="muted">填入管理令牌后操作生效</div>
+  </header>
+
+  <div class="card">
+    <label>管理令牌</label>
+    <input id="token" type="password" placeholder="X-Admin-Token" />
+    <button onclick="saveToken()">保存令牌</button>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>开关</label>
+        <button onclick="toggle(true)">开启</button>
+        <button onclick="toggle(false)">关闭</button>
+      </div>
+      <div>
+        <label>设置风格</label>
+        <select id="styleScope">
+          <option value="channel">channel</option>
+          <option value="guild">guild</option>
+        </select>
+        <input id="styleScopeValue" placeholder="scope key (如 channel:123)" />
+        <select id="styleSelect"></select>
+        <button onclick="setStyle()">应用</button>
+      </div>
+      <div>
+        <label>导出对话</label>
+        <button onclick="exportData()">导出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>样式配置 (编辑后提交)</label>
+    <select id="styleEditSelect"></select>
+    <textarea id="stylePrompt" rows="4" placeholder="system prompt"></textarea>
+    <input id="styleModel" placeholder="模型名称" />
+    <input id="styleTemp" type="number" step="0.1" placeholder="温度" />
+    <input id="styleEmoji" type="number" step="0.1" placeholder="emoji 密度" />
+    <button onclick="saveStyle()">保存风格配置</button>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>最近事件</label>
+        <pre id="logs"></pre>
+      </div>
+      <div>
+        <label>Audit</label>
+        <pre id="audit"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let styles = [];
+    function token() { return localStorage.getItem('adminToken') || document.getElementById('token').value; }
+    function saveToken() { localStorage.setItem('adminToken', document.getElementById('token').value); loadStatus(); }
+    async function api(path, options={}) {
+      const res = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Token": token(),
+          ...(options.headers || {})
+        }
+      });
+      if (!res.ok) { throw new Error(await res.text()); }
+      return res.json();
+    }
+    async function loadStatus() {
+      try {
+        const data = await api('/api/status');
+        styles = data.styles;
+        const select = document.getElementById('styleSelect');
+        const editSelect = document.getElementById('styleEditSelect');
+        select.innerHTML = '<option value="auto">auto</option>' + styles.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        editSelect.innerHTML = styles.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        document.getElementById('logs').textContent = JSON.stringify(data.router_logs, null, 2);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    async function toggle(enabled) { await api('/api/toggle', {method:'POST', body: JSON.stringify({enabled})}); loadStatus(); }
+    async function setStyle() {
+      const scopeKey = document.getElementById('styleScopeValue').value || `${document.getElementById('styleScope').value}:`;
+      const styleId = document.getElementById('styleSelect').value;
+      await api('/api/style', {method:'POST', body: JSON.stringify({scope: scopeKey, style_id: styleId === 'auto' ? null : styleId})});
+      loadStatus();
+    }
+    async function saveStyle() {
+      const id = document.getElementById('styleEditSelect').value;
+      await api(`/api/style/${id}`, {method:'POST', body: JSON.stringify({
+        system_prompt: document.getElementById('stylePrompt').value,
+        model: document.getElementById('styleModel').value,
+        temperature: parseFloat(document.getElementById('styleTemp').value),
+        emoji_density: parseFloat(document.getElementById('styleEmoji').value),
+      })});
+      loadStatus();
+    }
+    async function exportData() {
+      const res = await api('/api/conversations/export');
+      alert('导出完成：' + res.path);
+    }
+    document.getElementById('styleEditSelect').addEventListener('change', () => {
+      const id = document.getElementById('styleEditSelect').value;
+      const style = styles.find(s => s.id === id);
+      if (style) {
+        document.getElementById('stylePrompt').value = style.system_prompt;
+        document.getElementById('styleModel').value = style.model;
+        document.getElementById('styleTemp').value = style.temperature;
+        document.getElementById('styleEmoji').value = style.emoji_density;
+      }
+    });
+    loadStatus();
+  </script>
+</body>
+</html>

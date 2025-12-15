@@ -1,0 +1,37 @@
+[
+  {
+    "ts": 1765812580.4582028,
+    "event": "admin_toggle",
+    "detail": "{\"enabled\": false}"
+  },
+  {
+    "ts": 1765812606.098956,
+    "event": "admin_toggle",
+    "detail": "{\"enabled\": false}"
+  },
+  {
+    "ts": 1765812606.8241239,
+    "event": "admin_toggle",
+    "detail": "{\"enabled\": false}"
+  },
+  {
+    "ts": 1765812651.350891,
+    "event": "admin_toggle",
+    "detail": "{\"enabled\": true}"
+  },
+  {
+    "ts": 1765812653.119393,
+    "event": "admin_toggle",
+    "detail": "{\"enabled\": true}"
+  },
+  {
+    "ts": 1765813372.351679,
+    "event": "reply",
+    "detail": "{\"style\": \"formal\", \"reason\": \"low_confidence\", \"user\": <<card>>, \"channel\": <<card>>}"
+  },
+  {
+    "ts": 1765813397.525152,
+    "event": "reply",
+    "detail": "{\"style\": \"formal\", \"reason\": \"low_confidence\", \"user\": <<card>>, \"channel\": <<card>>}"
+  }
+]
