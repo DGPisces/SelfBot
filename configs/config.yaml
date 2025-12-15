@@ -1,0 +1,96 @@
+app:
+  name: "SelfBot"
+  locale: "zh"
+  logging_level: "INFO"
+  data_dir: "data"
+
+discord:
+  token_env: "DISCORD_BOT_TOKEN"
+  application_id: ""
+  intents:
+    message_content: true
+  allow_dm: true
+  whitelist:
+    guilds: []
+    channels: []
+    users: []
+  blacklist:
+    guilds: []
+    channels: []
+    users: []
+  slash_command_guilds: []  # list of guild IDs to speed up sync; empty means global
+
+behavior:
+  enabled_by_default: true
+  respond_to_bots: false
+  mention_only: false
+  min_reply_delay: 0.8
+  max_reply_delay: 2.4
+  send_typing: true
+  emoji_density: 0.3
+  duplicate_window_seconds: 120
+  duplicate_similarity: 0.92
+  rate_limit:
+    window_seconds: 30
+    max_messages: 6
+    cooldown_prompt: "我这边处理有点多，稍后再回复你哦～"
+    notify_when_limited: true
+  context:
+    scope: "channel"  # channel | user | thread
+    max_messages: 12
+    expiry_minutes: 120
+
+router:
+  default_style: "warm"
+  fallback_style: "formal"
+  confidence_threshold: 0.35
+
+styles:
+  - id: "techie"
+    name: "理工"
+    model: "qwen3:8b"
+    system_prompt: "你是一个理工科背景、思路清晰的朋友，回答精简，偶尔用一点技术隐喻。保持礼貌，不要啰嗦。"
+    temperature: 0.3
+    presence_penalty: 0.2
+    frequency_penalty: 0.1
+    emoji_density: 0.05
+  - id: "warm"
+    name: "温柔"
+    model: "qwen3:8b"
+    system_prompt: "你是一个温柔细腻的朋友，语气轻松、关怀，偶尔用合适的表情符号。回答保持短句。"
+    temperature: 0.6
+    presence_penalty: 0.1
+    frequency_penalty: 0.2
+    emoji_density: 0.35
+  - id: "snark"
+    name: "毒舌"
+    model: "qwen3:8b"
+    system_prompt: "你是一个嘴毒但不失底线的朋友，话里有梗但不恶意，句子短，直给。"
+    temperature: 0.8
+    presence_penalty: 0.3
+    frequency_penalty: 0.3
+    emoji_density: 0.1
+  - id: "formal"
+    name: "正式"
+    model: "qwen3:8b"
+    system_prompt: "你是一个正式而克制的同事，语气简洁、尊重。"
+    temperature: 0.4
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+    emoji_density: 0.0
+
+ollama:
+  base_url: "http://ollama:11434"
+  timeout_seconds: 60
+
+asr:
+  provider: "dummy"  # dummy | http
+  http:
+    endpoint: "http://localhost:9000/asr"
+    timeout_seconds: 30
+
+admin:
+  host: "0.0.0.0"
+  port: 8000
+  token_env: "ADMIN_TOKEN"
+  allow_cors: false

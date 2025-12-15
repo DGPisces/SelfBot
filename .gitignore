@@ -1,3 +1,14 @@
+__pycache__/
+.python-version
+.venv/
+.env
+*.pyc
+*.pyo
+.mypy_cache/
+.pytest_cache/
+data/runtime_state.json
+data/conversations.log
+data/exports/
 docs/AGENTS.md
 docs/architecture.md
 docs/project_description.md
